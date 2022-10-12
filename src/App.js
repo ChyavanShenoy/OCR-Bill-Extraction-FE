@@ -1,38 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { createWorker } from "tesseract.js";
 import "./App.css";
-import styled, { keyframes } from "styled-components";
+import DisplayResult from "./components/DisplayResult";
+// import styled, { keyframes } from "styled-components";
 import Dropdown from "./components/dropdown/Dropdown";
-import data_base64 from "./b64";
-import axios from "axios";
+import Header from "./components/Header";
+import Selection from "./components/Selection";
+// import data_base64 from "./b64";
+// import axios from "axios";
+import {animation, SuccessWrapper} from './components/styling/styles'
 
-const animation = keyframes`
-  0% { opacity: 0; transform: translateY(-100px); }
-  25% { opacity: 1; transform: translateY(0px); }
-  75% { opacity: 1; transform: translateY(0px); }
-  100% { opacity: 0; transform: translateY(-100px); }
-`;
-const Wrapper = styled.span`
-  animation-name: ${animation};
-  animation-duration: 10s;
-  animation-fill-mode: forwards;
-  animation-iteration-count: infinite;
-  font-size: 50px;
-  font-weight: 600;
-`;
-const SuccessWrapper = styled.span`
-  animation-name: ${animation};
-  animation-duration: 1s;
-  animation-fill-mode: forwards;
-  animation-iteration-count: infinite;
-  font-size: 30px;
-  font-weight: 600;
-`;
 
 function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [textResult, setTextResult] = useState("");
   const [imagebase,setImagebase]=useState("")
+  // const [extracted, setExtracted]=useState(false)
+  const base64 =
+    `data:image/png;base64,${imagebase}`;
 
   const worker = createWorker();
 
@@ -58,71 +43,58 @@ function App() {
     }
   };
 
-  let base64String = "";
-
+  
   function imageUploaded() {
     var file = document.querySelector("input[id=upload]")["files"][0];
-
     var reader = new FileReader();
-    console.log("next");
-
     reader.onload = function () {
       base64String = reader.result.replace("data:", "").replace(/^.+,/, "");
-
-      // const imageBase64Stringsep = base64String;
-
-      // alert(imageBase64Stringsep);
-      // console.log(base64String);
-      console.log("Conversion Complete");
     };
     reader.readAsDataURL(file);
   }
 
+
+  var base64String = "";
+
+  
   function displayString() {
-    console.log("Base64String about to be printed");
+    console.log("Base64String is about to be printed");
     alert(base64String);
   }
-  
-let json_format_data =  {
-  "image_location": {
-    "image_data": data_base64,
-  }
+
+async function extract() {
+  const response= await fetch("http://localhost:8080/bill", {
+    method: "POST",
+    headers: {
+      
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+    body: JSON.stringify({"image_data": base64String}),
+  });
+  // console.log(response, '---------------------------------------');
+  const data=await response.json();
+  // console.log("Data_being_returned", data);
+
+  // console.log("Data_result", data.result)
+  // console.log("resultData", resultDataBlocks)
+  const resultDataBlocks = data.result.pages[0].blocks
+  // Object.entries(resultDataBlocks).forEach((entry) => {
+  //   const [index, value] = entry;
+  //   // console.log("Index: ", index, "Value: ", value);
+  // });
+  console.log("---------------------------------------");
+  resultDataBlocks.forEach((block) => {
+    Object.entries(block).forEach((entry) => {
+      const [index, value] = entry;
+      
+      // console.log("Level: ", index, "Value: ", value);
+    });
+  });
+  setImagebase(data.synth_image)
 }
 
-  // function extract() {
-  //   fetch("http://127.0.0.1:8000/bill", {
-  //     mode: "no-cors",
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       "Access-Control-Allow-Origin": "*",
-  //     },
-  //     body: JSON.stringify(json_format_data),
-  //   }).then(response=>response.json()).then(data => setImage(data.synth_image));
 
-
-  // }
-
-  async function extract() {
-    const response= await fetch("http://localhost:8000/bill", {
-      mode: "no-cors",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: json_format_data,
-    });
-    console.log(json_format_data)
-    console.log(response, '---------------------------------------');
-    const data=await response.json();
-    console.log(data, '--------------------------------------');
-    setImagebase(data.synth_image)
-  }
-
-  function display(){
-    console.log(imagebase)
-  }
 
    function decodeBase64(base64String) {
     let base64ToString = Buffer.from(base64String, "base64").toString()
@@ -131,29 +103,21 @@ let json_format_data =  {
 
   return (
     <div className="App">
-      <Wrapper>OCR App</Wrapper>
-      <p className="waviy">Extract Text Anytime, Anywhere!</p>
-      <Dropdown />
-      <div className="input-wrapper">
-        <label htmlFor="upload">Upload Image</label>
-        <input
-          type="file"
-          id="upload"
-          accept="image/*"
-          onChange={imageUploaded}
-        />
-      </div>
+      <Header />
+      <Selection imageUploaded={imageUploaded} imagebase={imagebase} />
       <div className="input-wrapper">
         {/* <input type="file" onChange={extract} /> */}
         <button onClick={extract} style={{ width: "100px", height: "50px" }}>
           Extract
         </button>
       </div>
-      <button onClick={display}>
-        Display
-    </button>
+      
     <div>
     {/* <img src={"data:image/jpeg;base64," + this.state.value} /> */}
+    {/* <img width='500' height='500' src={`data:image/png;base64,${imagebase}`}/> */}
+    {/* {
+      extracted ? <img width='500' height='500' src={`data:image/png;base64,${imagebase}`}/> : <img width='500' height='500' src={URL.createObjectURL(selectedImage)}/>
+    } */}
     </div>
 
       <div className="result">
@@ -168,11 +132,13 @@ let json_format_data =  {
           </div>
         )}
       </div>
-      {textResult && (
+      <DisplayResult  />
+
+      {/* {textResult && (
         <SuccessWrapper>
           <h1 className="success">Extraction Successful</h1>
         </SuccessWrapper>
-      )}
+      )} */}
     </div>
   );
 }
