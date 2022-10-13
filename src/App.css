@@ -85,3 +85,9 @@ body {
 .success {
  color: darkgreen;
 }
+
+.gridBox {
+  display: grid;
+  padding: 10px;
+  grid-template-columns: 300px 300px;
+}
