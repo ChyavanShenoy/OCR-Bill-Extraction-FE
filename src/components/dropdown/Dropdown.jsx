@@ -5,12 +5,7 @@ const Dropdown = () => {
   return (
     <>
       <div className="select" tabindex="1">
-        <input
-          className="selectopt"
-          name="test"
-          type="radio"
-          id="opt1"
-        />
+        <input className="selectopt" name="test" type="radio" id="opt1" />
         <label for="opt1" className="option">
           Choose an option
         </label>
@@ -20,7 +15,7 @@ const Dropdown = () => {
         </label>
         <input className="selectopt" name="test" type="radio" id="opt3" />
         <label for="opt3" className="option">
-          Water Bill
+          2 Column Bill
         </label>
       </div>
     </>
